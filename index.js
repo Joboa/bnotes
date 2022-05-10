@@ -77,18 +77,18 @@ app.get('/api/notes/:id', (request, response) => {
 })
 
 // PUT: /notes/:id
-app.put('/api/notes/:id', (request, response) => {
-  const id = Number(request.params.id)
-  const note = notes.find(note => note.id === id)
+// app.put('/api/notes/:id', (request, response) => {
+//   const id = Number(request.params.id)
+//   const note = notes.find(note => note.id === id)
 
-  if (note) {
-    const important = request.body.important
-    const newNote = {...note, important: important}
-    response.send(newNote)
-  }
+//   if (note) {
+//     const important = request.body.important
+//     const newNote = {...note, important: important}
+//     response.send(newNote)
+//   }
 
-  response.status(404).end(`note with id:${id} not found`)
-})
+//   response.status(404).end(`note with id:${id} not found`)
+// })
 
 // DELETE: /notes/:id
 app.delete('/api/notes/:id', (request, response) => {
