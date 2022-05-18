@@ -1,56 +1,21 @@
-const { urlencoded } = require('express')
 const express = require('express')
 const app = express()
-app.use(express.json())
-var morgan = require('morgan')
-morgan('tiny')
-app.use(morgan('combined'))
+const cors = require('cors')
+const Person = require('./models/phonebook')
 
-let phonebooks = [
-  {
-    id: 1,
-    name: 'Arto Hellas',
-    number: '040,123456'
-  },
-  {
-    id: 2,
-    name: 'Ada Lovelace',
-    number: '39-44-5323-523'
-  }
-]
-
-// GET: info
-app.get('/info', (request, response) => {
-  const numberOfPersons = phonebooks.length
-  console.log(numberOfPersons)
-  response.send(`Phonebook has info for ${numberOfPersons} people 
-  <br><br>
-  ${new Date()}`)
-})
-
-// GET: /phonebook
-app.get('/api/phonebooks/', (request, response) => {
-  response.json(phonebooks)
-})
-
-// GET: /phonebook/id
-app.get('/api/phonebooks/:id', (request, response) => {
-  const id = Number(request.params.id)
-  const phonebook = phonebooks.find(phonebook => phonebook.id === id)
-
-  if (phonebook) {
-    response.json(phonebook)
-  }
-  response.status(404).end(`phonebook with id: ${id} not found!`)
-})
-
-// get id
-const generateId = () => {
-  const maxId = phonebooks.length > 0
-    ? Math.max(...phonebooks.map(n => n.id))
-    : 0
-  return maxId + 1
+// middleware
+const requestLogger = (request, response, next) => {
+  console.log("Method", request.method)
+  console.log("Path", request.path)
+  console.log("Body", request.body)
+  console.log('---')
+  next()
 }
+
+app.use(express.json())
+app.use(requestLogger)
+app.use(cors())
+app.use(express.static('build'))
 
 // POST: /phonebooks
 app.post('/api/phonebooks', (request, response) => {
@@ -65,30 +30,37 @@ app.post('/api/phonebooks', (request, response) => {
   }
 
   // check if name already exist
-  const getName = phonebooks.find(pb => pb.name === body.name)
+  const getExistingName = Person.find(person => person.name === body.name)
 
-  if (getName) {
+  if (getExistingName) {
     return response.status(400).json({
       error: 'name must be unique'
     })
   }
 
-  const phonebook = {
+  const phonebook = new Person({
     name: body.name,
     number: body.number,
-    id: generateId(),
-  }
+  })
 
-  phonebooks = phonebooks.concat(phonebook)
-
-  response.json(phonebook)
+  phonebook.save().then(savedPerson => {
+    response.json(savedPerson)
+  })
 })
 
-// DEETE: /phonebook/id
-app.delete('/api/phonebooks/:id', (request, response) => {
-  const id = request.params.id
-  const phonebook = phonebooks.filter(phonebook => phonebook.id !== id)
-  response.status(204).end()
+// GET: /phonebook
+app.get('/api/phonebooks', (request, response) => {
+  Person.find({}).then(persons => {
+    response.json(persons)
+  })
+})
+
+// GET: /phonebook/id
+app.get('/api/phonebooks/:id', (request, response) => {
+  // const id = request.params.id
+  Person.findById(request.params.id).then(pers => {
+    response.json(pers)
+  })
 })
 
 PORT = 3001
